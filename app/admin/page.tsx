@@ -286,6 +286,8 @@ export default function AdminDashboard() {
           </Link>
           <nav className="flex items-center gap-4">
             <Link href="/admin" className="text-yellow-500 font-medium">Pedidos</Link>
+            <Link href="/admin/trips" className="text-muted-foreground hover:text-foreground">Viajes</Link>
+            <Link href="/admin/finances" className="text-muted-foreground hover:text-foreground">Finanzas</Link>
             <Link href="/admin/users" className="text-muted-foreground hover:text-foreground">Usuarios</Link>
             <Button 
               variant="ghost" 
