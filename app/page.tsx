@@ -225,7 +225,7 @@ export default function HomePage() {
               <h4 className="font-semibold mb-4">Enlaces</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/track" className="hover:text-yellow-500">Rastrear Pedido</Link></li>
-                <li><Link href="/services" className="hover:text-yellow-500">Servicios</Link></li>
+                <li><Link href="/cotizar" className="hover:text-yellow-500">Cotizar</Link></li>
                 <li><Link href="/pricing" className="hover:text-yellow-500">Tarifas</Link></li>
               </ul>
             </div>
@@ -233,7 +233,7 @@ export default function HomePage() {
               <h4 className="font-semibold mb-4">Contacto</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>📞 +503 1234 5678</li>
-                <li>📧 info@yellowexpress.com</li>
+                <li>📧 info@theyellowexpress.com</li>
                 <li>📍 San Salvador, El Salvador</li>
               </ul>
             </div>

@@ -136,15 +136,6 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-border">
-              <p className="text-sm text-muted-foreground text-center mb-4">
-                Credenciales de prueba:
-              </p>
-              <div className="space-y-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                <p><strong>Admin:</strong> admin@yellowexpress.com / admin123</p>
-                <p><strong>Motorista:</strong> driver1@yellowexpress.com / driver123</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
 

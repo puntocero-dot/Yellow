@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { 
   Package, Truck, Users, Plus, Search, 
   MoreHorizontal, Eye, Edit, Trash2, RefreshCw,
-  TrendingUp, Clock, CheckCircle, AlertCircle, LogOut
+  TrendingUp, Clock, CheckCircle, AlertCircle, LogOut,
+  Upload, FileSpreadsheet, AlertTriangle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -83,7 +84,10 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [bulkUploading, setBulkUploading] = useState(false)
   const { toast } = useToast()
 
   const [newOrder, setNewOrder] = useState({
@@ -148,6 +152,82 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error creating order:', error)
       toast({ title: 'Error al crear pedido', variant: 'destructive' })
+    }
+  }
+
+  async function deleteOrder(orderId: string) {
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' })
+      if (res.ok) {
+        toast({ title: 'Pedido eliminado exitosamente' })
+        setIsDeleteDialogOpen(false)
+        setSelectedOrder(null)
+        fetchOrders()
+      } else {
+        toast({ title: 'Error al eliminar pedido', variant: 'destructive' })
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error)
+      toast({ title: 'Error al eliminar pedido', variant: 'destructive' })
+    }
+  }
+
+  async function handleBulkUpload(file: File) {
+    setBulkUploading(true)
+    try {
+      const text = await file.text()
+      const lines = text.split('\n').filter(l => l.trim())
+      if (lines.length < 2) {
+        toast({ title: 'El archivo está vacío o no tiene datos', variant: 'destructive' })
+        setBulkUploading(false)
+        return
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+      const requiredFields = ['nombre', 'email', 'telefono', 'direccion', 'ciudad']
+      const missing = requiredFields.filter(f => !headers.includes(f))
+      if (missing.length > 0) {
+        toast({ title: `Columnas faltantes: ${missing.join(', ')}`, variant: 'destructive' })
+        setBulkUploading(false)
+        return
+      }
+
+      let created = 0
+      let errors = 0
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim())
+        const row: Record<string, string> = {}
+        headers.forEach((h, idx) => { row[h] = values[idx] || '' })
+
+        try {
+          const res = await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer_name: row['nombre'],
+              customer_email: row['email'],
+              customer_phone: row['telefono'],
+              destination_address: row['direccion'],
+              destination_city: row['ciudad'],
+              package_description: row['descripcion'] || '',
+            }),
+          })
+          if (res.ok) created++
+          else errors++
+        } catch {
+          errors++
+        }
+      }
+
+      toast({ title: `Carga masiva: ${created} creados, ${errors} errores` })
+      setIsBulkUploadOpen(false)
+      fetchOrders()
+    } catch (error) {
+      console.error('Error bulk upload:', error)
+      toast({ title: 'Error al procesar archivo', variant: 'destructive' })
+    } finally {
+      setBulkUploading(false)
     }
   }
 
@@ -300,6 +380,10 @@ export default function AdminDashboard() {
               <RefreshCw className="w-4 h-4 mr-2" />
               Actualizar
             </Button>
+            <Button variant="outline" onClick={() => setIsBulkUploadOpen(true)}>
+              <Upload className="w-4 h-4 mr-2" />
+              Carga Masiva
+            </Button>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Nuevo Pedido
@@ -371,6 +455,17 @@ export default function AdminDashboard() {
                               }}
                             >
                               <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                              onClick={() => {
+                                setSelectedOrder(order)
+                                setIsDeleteDialogOpen(true)
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </td>
@@ -447,6 +542,85 @@ export default function AdminDashboard() {
             </Button>
             <Button onClick={createOrder}>
               Crear Pedido
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-500">
+              <AlertTriangle className="w-5 h-5" />
+              Eliminar Pedido
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground">
+              ¿Estás seguro de que deseas eliminar el pedido{' '}
+              <strong className="text-foreground">{selectedOrder?.tracking_number}</strong>
+              {' '}de <strong className="text-foreground">{selectedOrder?.customer_name}</strong>?
+            </p>
+            <p className="text-sm text-red-400 mt-2">Esta acción no se puede deshacer.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => selectedOrder && deleteOrder(selectedOrder.id)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Upload Dialog */}
+      <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-yellow-500" />
+              Carga Masiva de Pedidos
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-muted/50 p-4 rounded-lg text-sm">
+              <p className="font-medium mb-2">Formato del archivo CSV:</p>
+              <code className="text-xs text-yellow-500 block bg-background p-2 rounded">
+                nombre,email,telefono,direccion,ciudad,descripcion
+              </code>
+              <p className="text-muted-foreground mt-2">
+                Cada fila es un pedido. La primera fila debe ser el encabezado.
+              </p>
+            </div>
+            <div>
+              <Label>Seleccionar archivo CSV</Label>
+              <Input
+                type="file"
+                accept=".csv"
+                disabled={bulkUploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleBulkUpload(file)
+                }}
+                className="mt-1"
+              />
+            </div>
+            {bulkUploading && (
+              <div className="flex items-center gap-2 text-yellow-500">
+                <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm">Procesando pedidos...</span>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBulkUploadOpen(false)} disabled={bulkUploading}>
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>
