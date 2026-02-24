@@ -40,6 +40,7 @@ type Order = {
   destination_city: string
   destination_country: string
   package_description: string
+  weight_pounds: number | null
   status: string
   driver_id: string | null
   created_at: string
@@ -97,6 +98,7 @@ export default function AdminDashboard() {
     destination_address: '',
     destination_city: '',
     package_description: '',
+    weight_pounds: '',
   })
 
   useEffect(() => {
@@ -144,6 +146,7 @@ export default function AdminDashboard() {
           destination_address: '',
           destination_city: '',
           package_description: '',
+          weight_pounds: '',
         })
         fetchOrders()
       } else {
@@ -211,6 +214,7 @@ export default function AdminDashboard() {
               destination_address: row['direccion'],
               destination_city: row['ciudad'],
               package_description: row['descripcion'] || '',
+              weight_pounds: row['peso'] || '',
             }),
           })
           if (res.ok) created++
@@ -413,6 +417,7 @@ export default function AdminDashboard() {
                       <th className="text-left p-4 font-medium">Guía</th>
                       <th className="text-left p-4 font-medium">Cliente</th>
                       <th className="text-left p-4 font-medium">Destino</th>
+                      <th className="text-right p-4 font-medium">Peso (lbs)</th>
                       <th className="text-left p-4 font-medium">Estado</th>
                       <th className="text-left p-4 font-medium">Fecha</th>
                       <th className="text-right p-4 font-medium">Acciones</th>
@@ -432,6 +437,13 @@ export default function AdminDashboard() {
                         </td>
                         <td className="p-4">
                           <p className="text-sm">{order.destination_city}</p>
+                        </td>
+                        <td className="p-4 text-right">
+                          {order.weight_pounds ? (
+                            <span className="font-semibold text-yellow-500">{order.weight_pounds}</span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs italic">—</span>
+                          )}
                         </td>
                         <td className="p-4">
                           <Badge className={`${STATUS_COLORS[order.status]} text-white`}>
@@ -529,13 +541,25 @@ export default function AdminDashboard() {
                 placeholder="San Salvador"
               />
             </div>
-            <div>
-              <Label>Descripción del Paquete</Label>
-              <Input
-                value={newOrder.package_description}
-                onChange={(e) => setNewOrder({ ...newOrder, package_description: e.target.value })}
-                placeholder="Ropa y accesorios"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Descripción del Paquete</Label>
+                <Input
+                  value={newOrder.package_description}
+                  onChange={(e) => setNewOrder({ ...newOrder, package_description: e.target.value })}
+                  placeholder="Ropa y accesorios"
+                />
+              </div>
+              <div>
+                <Label>Peso (libras)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={newOrder.weight_pounds}
+                  onChange={(e) => setNewOrder({ ...newOrder, weight_pounds: e.target.value })}
+                  placeholder="3.5"
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -594,7 +618,7 @@ export default function AdminDashboard() {
             <div className="bg-muted/50 p-4 rounded-lg text-sm">
               <p className="font-medium mb-2">Formato del archivo CSV:</p>
               <code className="text-xs text-yellow-500 block bg-background p-2 rounded">
-                nombre,email,telefono,direccion,ciudad,descripcion
+                nombre,email,telefono,direccion,ciudad,descripcion,peso
               </code>
               <p className="text-muted-foreground mt-2">
                 Cada fila es un pedido. La primera fila debe ser el encabezado.
@@ -678,6 +702,7 @@ export default function AdminDashboard() {
                 <p className="text-sm"><strong>Cliente:</strong> {selectedOrder.customer_name}</p>
                 <p className="text-sm"><strong>Teléfono:</strong> {selectedOrder.customer_phone}</p>
                 <p className="text-sm"><strong>Destino:</strong> {selectedOrder.destination_city}</p>
+                <p className="text-sm"><strong>Peso:</strong> {selectedOrder.weight_pounds ? `${selectedOrder.weight_pounds} lbs` : 'Sin peso'}</p>
               </div>
             </div>
           )}

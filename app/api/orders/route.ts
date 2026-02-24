@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
       destination_country = 'El Salvador',
       package_description,
       package_weight,
+      weight_pounds,
       declared_value,
       shipping_cost,
     } = body
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest) {
         destination_country,
         package_description,
         package_weight,
+        weight_pounds: weight_pounds ? parseFloat(weight_pounds) : null,
         declared_value,
         shipping_cost,
         status: 'pending',
