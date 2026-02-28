@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { 
-  Package, Truck, Users, Plus, Search, 
+import {
+  Package, Truck, Users, Plus, Search,
   MoreHorizontal, Eye, Edit, Trash2, RefreshCw,
   TrendingUp, Clock, CheckCircle, AlertCircle, LogOut,
   Upload, FileSpreadsheet, AlertTriangle
@@ -135,7 +135,7 @@ export default function AdminDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newOrder),
       })
-      
+
       if (res.ok) {
         toast({ title: 'Pedido creado exitosamente' })
         setIsCreateDialogOpen(false)
@@ -235,14 +235,14 @@ export default function AdminDashboard() {
     }
   }
 
-  async function updateOrderStatus(orderId: string, status: string, driverId?: string) {
+  async function updateOrderStatus(orderId: string, status: string, driverId?: string, weightPounds?: string) {
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, driver_id: driverId }),
+        body: JSON.stringify({ status, driver_id: driverId, weight_pounds: weightPounds }),
       })
-      
+
       if (res.ok) {
         toast({ title: 'Pedido actualizado' })
         fetchOrders()
@@ -257,13 +257,13 @@ export default function AdminDashboard() {
   }
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       order.tracking_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer_phone.includes(searchTerm)
-    
+
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter
-    
+
     return matchesSearch && matchesStatus
   })
 
@@ -293,8 +293,8 @@ export default function AdminDashboard() {
             <Link href="/admin/trips" className="text-muted-foreground hover:text-foreground">Viajes</Link>
             <Link href="/admin/finances" className="text-muted-foreground hover:text-foreground">Finanzas</Link>
             <Link href="/admin/users" className="text-muted-foreground hover:text-foreground">Usuarios</Link>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={async () => {
                 await fetch('/api/auth/logout', { method: 'POST' })
@@ -460,8 +460,8 @@ export default function AdminDashboard() {
                                 <Eye className="w-4 h-4" />
                               </Button>
                             </Link>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="icon"
                               onClick={() => {
                                 setSelectedOrder(order)
@@ -470,8 +470,8 @@ export default function AdminDashboard() {
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="icon"
                               className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
                               onClick={() => {
@@ -594,8 +594,8 @@ export default function AdminDashboard() {
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={() => selectedOrder && deleteOrder(selectedOrder.id)}
             >
               <Trash2 className="w-4 h-4 mr-2" />
@@ -662,8 +662,8 @@ export default function AdminDashboard() {
             <div className="space-y-4">
               <div>
                 <Label>Estado</Label>
-                <Select 
-                  value={selectedOrder.status} 
+                <Select
+                  value={selectedOrder.status}
                   onValueChange={(value) => setSelectedOrder({ ...selectedOrder, status: value })}
                 >
                   <SelectTrigger>
@@ -676,12 +676,12 @@ export default function AdminDashboard() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {['assigned_to_driver', 'out_for_delivery'].includes(selectedOrder.status) && (
                 <div>
                   <Label>Asignar Motorista</Label>
-                  <Select 
-                    value={selectedOrder.driver_id || ''} 
+                  <Select
+                    value={selectedOrder.driver_id || ''}
                     onValueChange={(value) => setSelectedOrder({ ...selectedOrder, driver_id: value })}
                   >
                     <SelectTrigger>
@@ -697,12 +697,22 @@ export default function AdminDashboard() {
                   </Select>
                 </div>
               )}
-              
+
+              <div>
+                <Label>Peso (libras)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={selectedOrder.weight_pounds ?? ''}
+                  onChange={(e) => setSelectedOrder({ ...selectedOrder, weight_pounds: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                  placeholder="Ej: 3.5"
+                />
+              </div>
+
               <div className="bg-muted/50 p-4 rounded-lg">
                 <p className="text-sm"><strong>Cliente:</strong> {selectedOrder.customer_name}</p>
                 <p className="text-sm"><strong>Teléfono:</strong> {selectedOrder.customer_phone}</p>
                 <p className="text-sm"><strong>Destino:</strong> {selectedOrder.destination_city}</p>
-                <p className="text-sm"><strong>Peso:</strong> {selectedOrder.weight_pounds ? `${selectedOrder.weight_pounds} lbs` : 'Sin peso'}</p>
               </div>
             </div>
           )}
@@ -711,9 +721,10 @@ export default function AdminDashboard() {
               Cancelar
             </Button>
             <Button onClick={() => selectedOrder && updateOrderStatus(
-              selectedOrder.id, 
-              selectedOrder.status, 
-              selectedOrder.driver_id || undefined
+              selectedOrder.id,
+              selectedOrder.status,
+              selectedOrder.driver_id || undefined,
+              selectedOrder.weight_pounds !== null && selectedOrder.weight_pounds !== undefined ? String(selectedOrder.weight_pounds) : ''
             )}>
               Guardar Cambios
             </Button>

@@ -43,7 +43,7 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { status, driver_id, delivery_notes } = body
+    const { status, driver_id, delivery_notes, weight_pounds } = body
 
     const updateData: Record<string, unknown> = {}
     
@@ -60,6 +60,10 @@ export async function PATCH(
     
     if (delivery_notes) {
       updateData.delivery_notes = delivery_notes
+    }
+
+    if (weight_pounds !== undefined) {
+      updateData.weight_pounds = weight_pounds === '' || weight_pounds === null ? null : parseFloat(weight_pounds)
     }
 
     const { data: order, error } = await supabaseAdmin
