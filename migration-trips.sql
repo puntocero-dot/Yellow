@@ -41,5 +41,11 @@ ALTER TABLE trips ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trip_expenses ENABLE ROW LEVEL SECURITY;
 
 -- Policies (service role bypasses RLS, these are for anon if needed)
-CREATE POLICY "Service role full access trips" ON trips FOR ALL USING (true);
-CREATE POLICY "Service role full access trip_expenses" ON trip_expenses FOR ALL USING (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access trips' AND tablename = 'trips') THEN
+    CREATE POLICY "Service role full access trips" ON trips FOR ALL USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access trip_expenses' AND tablename = 'trip_expenses') THEN
+    CREATE POLICY "Service role full access trip_expenses" ON trip_expenses FOR ALL USING (true);
+  END IF;
+END $$;
