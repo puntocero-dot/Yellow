@@ -41,6 +41,11 @@ type Order = {
   destination_country: string
   package_description: string
   weight_pounds: number | null
+  quantity: number
+  unit_price: number
+  shipping_fee: number
+  price_per_pound: number
+  shipping_cost: number
   status: string
   driver_id: string | null
   created_at: string
@@ -99,7 +104,38 @@ export default function AdminDashboard() {
     destination_city: '',
     package_description: '',
     weight_pounds: '',
+    quantity: '1',
+    unit_price: '0',
+    shipping_fee: '0',
+    price_per_pound: '6.99',
+    shipping_cost: '0',
   })
+
+  // Automatic calculation for new order
+  useEffect(() => {
+    const weight = parseFloat(newOrder.weight_pounds) || 0
+    const priceLb = parseFloat(newOrder.price_per_pound) || 0
+    const fee = parseFloat(newOrder.shipping_fee) || 0
+    const total = (weight * priceLb) + fee
+    
+    if (total.toString() !== newOrder.shipping_cost) {
+      setNewOrder(prev => ({ ...prev, shipping_cost: total.toFixed(2) }))
+    }
+  }, [newOrder.weight_pounds, newOrder.price_per_pound, newOrder.shipping_fee])
+
+  // Automatic calculation for selected order (editing)
+  useEffect(() => {
+    if (selectedOrder) {
+      const weight = selectedOrder.weight_pounds || 0
+      const priceLb = selectedOrder.price_per_pound || 6.99
+      const fee = selectedOrder.shipping_fee || 0
+      const total = (weight * priceLb) + fee
+      
+      if (total !== selectedOrder.shipping_cost) {
+        setSelectedOrder(prev => prev ? ({ ...prev, shipping_cost: total }) : null)
+      }
+    }
+  }, [selectedOrder?.weight_pounds, selectedOrder?.price_per_pound, selectedOrder?.shipping_fee])
 
   useEffect(() => {
     fetchOrders()
@@ -147,6 +183,11 @@ export default function AdminDashboard() {
           destination_city: '',
           package_description: '',
           weight_pounds: '',
+          quantity: '1',
+          unit_price: '0',
+          shipping_fee: '0',
+          price_per_pound: '6.99',
+          shipping_cost: '0',
         })
         fetchOrders()
       } else {
@@ -203,6 +244,15 @@ export default function AdminDashboard() {
         const row: Record<string, string> = {}
         headers.forEach((h, idx) => { row[h] = values[idx] || '' })
 
+        const weight = parseFloat(row['peso']) || 0
+        const priceLb = parseFloat(row['costo_libra']) || 6.99
+        const fee = parseFloat(row['flete']) || 0
+        const quantity = parseInt(row['cantidad']) || 1
+        const unitPrice = parseFloat(row['precio']) || 0
+        
+        // Use provided price if exists, otherwise calculate it
+        const calculatedPrice = row['total'] ? parseFloat(row['total']) : (weight * priceLb) + fee
+
         try {
           const res = await fetch('/api/orders', {
             method: 'POST',
@@ -214,7 +264,12 @@ export default function AdminDashboard() {
               destination_address: row['direccion'],
               destination_city: row['ciudad'],
               package_description: row['descripcion'] || '',
-              weight_pounds: row['peso'] || '',
+              weight_pounds: weight,
+              quantity: quantity,
+              unit_price: unitPrice,
+              shipping_fee: fee,
+              price_per_pound: priceLb,
+              shipping_cost: calculatedPrice,
             }),
           })
           if (res.ok) created++
@@ -240,7 +295,18 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, driver_id: driverId, weight_pounds: weightPounds }),
+        body: JSON.stringify({ 
+          status, 
+          driver_id: driverId, 
+          weight_pounds: weightPounds,
+          ...(selectedOrder?.id === orderId ? {
+            quantity: selectedOrder.quantity,
+            unit_price: selectedOrder.unit_price,
+            shipping_fee: selectedOrder.shipping_fee,
+            price_per_pound: selectedOrder.price_per_pound,
+            shipping_cost: selectedOrder.shipping_cost,
+          } : {})
+        }),
       })
 
       if (res.ok) {
@@ -551,6 +617,27 @@ export default function AdminDashboard() {
                 />
               </div>
               <div>
+                <Label>Cantidad</Label>
+                <Input
+                  type="number"
+                  value={newOrder.quantity}
+                  onChange={(e) => setNewOrder({ ...newOrder, quantity: e.target.value })}
+                  placeholder="1"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Precio Unitario (Items)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={newOrder.unit_price}
+                  onChange={(e) => setNewOrder({ ...newOrder, unit_price: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
                 <Label>Peso (libras)</Label>
                 <Input
                   type="number"
@@ -559,6 +646,32 @@ export default function AdminDashboard() {
                   onChange={(e) => setNewOrder({ ...newOrder, weight_pounds: e.target.value })}
                   placeholder="3.5"
                 />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label>Costo Libra</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={newOrder.price_per_pound}
+                  onChange={(e) => setNewOrder({ ...newOrder, price_per_pound: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Flete</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={newOrder.shipping_fee}
+                  onChange={(e) => setNewOrder({ ...newOrder, shipping_fee: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Total Envío</Label>
+                <div className="h-10 px-3 py-2 rounded-md border border-input bg-muted font-bold flex items-center">
+                  ${newOrder.shipping_cost}
+                </div>
               </div>
             </div>
           </div>
@@ -618,7 +731,7 @@ export default function AdminDashboard() {
             <div className="bg-muted/50 p-4 rounded-lg text-sm">
               <p className="font-medium mb-2">Formato del archivo CSV:</p>
               <code className="text-xs text-yellow-500 block bg-background p-2 rounded">
-                nombre,email,telefono,direccion,ciudad,descripcion,peso
+                nombre,email,telefono,direccion,ciudad,descripcion,peso,cantidad,precio,flete,costo_libra
               </code>
               <p className="text-muted-foreground mt-2">
                 Cada fila es un pedido. La primera fila debe ser el encabezado.
@@ -698,15 +811,64 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              <div>
-                <Label>Peso (libras)</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  value={selectedOrder.weight_pounds ?? ''}
-                  onChange={(e) => setSelectedOrder({ ...selectedOrder, weight_pounds: e.target.value === '' ? null : parseFloat(e.target.value) })}
-                  placeholder="Ej: 3.5"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Cantidad</Label>
+                  <Input
+                    type="number"
+                    value={selectedOrder.quantity || 1}
+                    onChange={(e) => setSelectedOrder({ ...selectedOrder, quantity: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div>
+                  <Label>Precio Items</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={selectedOrder.unit_price || 0}
+                    onChange={(e) => setSelectedOrder({ ...selectedOrder, unit_price: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Peso (libras)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={selectedOrder.weight_pounds ?? ''}
+                    onChange={(e) => setSelectedOrder({ ...selectedOrder, weight_pounds: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                    placeholder="Ej: 3.5"
+                  />
+                </div>
+                <div>
+                  <Label>Costo Libra</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={selectedOrder.price_per_pound || 6.99}
+                    onChange={(e) => setSelectedOrder({ ...selectedOrder, price_per_pound: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Flete</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={selectedOrder.shipping_fee || 0}
+                    onChange={(e) => setSelectedOrder({ ...selectedOrder, shipping_fee: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div>
+                  <Label>Total Envío</Label>
+                  <div className="h-10 px-3 py-2 rounded-md border border-input bg-muted font-bold flex items-center">
+                    ${selectedOrder.shipping_cost?.toFixed(2) || '0.00'}
+                  </div>
+                </div>
               </div>
 
               <div className="bg-muted/50 p-4 rounded-lg">

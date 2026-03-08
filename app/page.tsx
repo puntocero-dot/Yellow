@@ -163,7 +163,7 @@ export default function HomePage() {
                   <li>• Seguro incluido</li>
                   <li>• Entrega en 5-7 días hábiles</li>
                 </ul>
-                <p className="text-lg font-semibold">Desde <span className="text-yellow-500">$8</span> por libra</p>
+                <p className="text-lg font-semibold">Desde <span className="text-yellow-500">$6.99 USD</span> por libra</p>
               </CardContent>
             </Card>
 
@@ -232,8 +232,8 @@ export default function HomePage() {
             <div>
               <h4 className="font-semibold mb-4">Contacto</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>📞 +12133774155</li>
-                <li>📧 info@theyellowexpress.com</li>
+                <li>📞 +1 (213) 377-4155</li>
+                <li>📧 admin@theyellowexpress.com</li>
                 <li>📍 San Salvador, El Salvador</li>
               </ul>
             </div>
@@ -247,7 +247,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-            <p>© 2024 The Yellow Express. Todos los derechos reservados.</p>
+            <p>© 2024 The Yellow Express. Todos los derechos reservados. powered by Punto Cero</p>
           </div>
         </div>
       </footer>

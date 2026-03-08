@@ -1,7 +1,7 @@
 // Precios por libra según destino
 export const PRICING = {
   // Precio base por libra (USD)
-  pricePerPound: 5.50,
+  pricePerPound: 6.99,
   // Precio mínimo de envío
   minimumCharge: 15.00,
   // Cargo por manejo
