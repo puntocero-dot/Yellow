@@ -33,7 +33,7 @@ export async function GET(
     // Get orders assigned to this trip
     const { data: orders } = await supabaseAdmin
       .from('orders')
-      .select('id, tracking_number, customer_name, customer_phone, destination_city, status, weight_pounds, created_at, shipping_cost, quantity')
+      .select('id, tracking_number, customer_name, customer_phone, destination_city, status, weight_pounds, created_at, shipping_cost, quantity, unit_price, shipping_fee, price_per_pound')
       .eq('trip_id', id)
       .order('created_at', { ascending: false })
 

@@ -38,6 +38,9 @@ type TripOrder = {
   weight_pounds: number | null
   shipping_cost: number | null
   quantity: number | null
+  unit_price: number | null
+  shipping_fee: number | null
+  price_per_pound: number | null
   created_at: string
 }
 
@@ -225,7 +228,14 @@ export default function FinancesPage() {
 
   // Calculations
   const totalPounds = tripOrders.reduce((sum, o) => sum + ((o.weight_pounds || 0) * (o.quantity || 1)), 0)
-  const totalRevenue = tripOrders.reduce((sum, o) => sum + (o.shipping_cost || 0), 0)
+  const totalRevenue = tripOrders.reduce((sum, o) => {
+    const weight = o.weight_pounds || 0
+    const priceLb = o.price_per_pound || 6.99
+    const fee = o.shipping_fee || 0
+    const quantity = o.quantity || 1
+    const orderTotal = ((weight * priceLb) + fee) * quantity
+    return sum + orderTotal
+  }, 0)
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
   const netProfit = totalRevenue - totalExpenses
 
@@ -374,8 +384,11 @@ export default function FinancesPage() {
                         </thead>
                         <tbody>
                           {tripOrders.map(order => {
-                            const lbs = order.weight_pounds || 0
-                            const orderTotal = order.shipping_cost || 0
+                            const weight = order.weight_pounds || 0
+                            const priceLb = order.price_per_pound || 6.99
+                            const fee = order.shipping_fee || 0
+                            const quantity = order.quantity || 1
+                            const orderTotal = ((weight * priceLb) + fee) * quantity
                             return (
                               <tr key={order.id} className="border-t border-border">
                                 <td className="p-3">
@@ -402,14 +415,14 @@ export default function FinancesPage() {
                                   ) : (
                                     <button
                                       className="text-sm hover:text-yellow-500 cursor-pointer"
-                                      onClick={() => { setEditingWeight(order.id); setWeightValue(String(lbs)) }}
+                                      onClick={() => { setEditingWeight(order.id); setWeightValue(String(weight)) }}
                                     >
-                                      {lbs > 0 ? `${lbs} lbs` : <span className="text-muted-foreground italic">sin peso</span>}
+                                      {weight > 0 ? `${weight} lbs` : <span className="text-muted-foreground italic">sin peso</span>}
                                     </button>
                                   )}
                                 </td>
                                 <td className="p-3 text-right font-semibold text-sm">
-                                  {lbs > 0 ? `$${orderTotal.toFixed(2)}` : '-'}
+                                  {weight > 0 ? `$${orderTotal.toFixed(2)}` : '-'}
                                 </td>
                               </tr>
                             )

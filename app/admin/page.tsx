@@ -358,7 +358,14 @@ export default function AdminDashboard() {
     ].includes(o.status)).length,
     delivered: orders.filter(o => o.status === 'delivered').length,
     totalWeight: orders.reduce((sum, o) => sum + ((o.weight_pounds || 0) * (o.quantity || 1)), 0),
-    totalAmount: orders.reduce((sum, o) => sum + (o.shipping_cost || 0), 0),
+    totalAmount: orders.reduce((sum, o) => {
+      const weight = o.weight_pounds || 0
+      const priceLb = o.price_per_pound || 6.99
+      const fee = o.shipping_fee || 0
+      const quantity = o.quantity || 1
+      const orderTotal = ((weight * priceLb) + fee) * quantity
+      return sum + orderTotal
+    }, 0),
   }
 
   return (
