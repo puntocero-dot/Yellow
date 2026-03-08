@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     // 1. Verify Vercel Cron Secret or Manual Auth
     const authHeader = request.headers.get('authorization')
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 0o401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // 2. Fetch Data to Backup
