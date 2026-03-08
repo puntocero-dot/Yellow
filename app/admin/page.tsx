@@ -726,7 +726,7 @@ export default function AdminDashboard() {
               </div>
             </div>
             <p className="text-[10px] text-muted-foreground italic">
-              * El "Precio Unitario" es el costo del artículo para reembolso. El "Flete" es un cargo único por pedido.
+              * El &quot;Precio Unitario&quot; es el costo del artículo para reembolso. El &quot;Flete&quot; es un cargo único por pedido.
             </p>
           </div>
           <DialogFooter>
