@@ -121,13 +121,13 @@ export default function AdminDashboard() {
     const priceLb = parseFloat(priceLbStr) || 0
     const fee = parseFloat(feeStr) || 0
     const quantity = parseInt(newOrder.quantity) || 1
-    const total = ((weight * priceLb) + fee) * quantity
+    const unitPrice = parseFloat(newOrder.unit_price) || 0
     
-    if (total.toString() !== newOrder.shipping_cost) {
-      setNewOrder(prev => ({ ...prev, shipping_cost: total.toFixed(2) }))
-    }
+    const total = ((weight * priceLb) * quantity) + fee + (unitPrice * quantity)
+    
+    setNewOrder(prev => ({ ...prev, shipping_cost: total.toFixed(2) }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newOrder.weight_pounds, newOrder.price_per_pound, newOrder.shipping_fee, newOrder.quantity])
+  }, [newOrder.weight_pounds, newOrder.price_per_pound, newOrder.shipping_fee, newOrder.quantity, newOrder.unit_price])
 
   // Automatic calculation for selected order (editing)
   useEffect(() => {
@@ -140,14 +140,14 @@ export default function AdminDashboard() {
       const priceLb = parseFloat(priceLbStr) || 0
       const fee = parseFloat(feeStr) || 0
       const quantity = selectedOrder.quantity || 1
-      const total = ((weight * priceLb) + fee) * quantity
+      const unitPrice = selectedOrder.unit_price || 0
       
-      if (total !== selectedOrder.shipping_cost) {
-        setSelectedOrder(prev => prev ? ({ ...prev, shipping_cost: total }) : null)
-      }
+      const total = ((weight * priceLb) * quantity) + fee + (unitPrice * quantity)
+      
+      setSelectedOrder(prev => prev ? ({ ...prev, shipping_cost: total }) : null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedOrder?.weight_pounds, selectedOrder?.price_per_pound, selectedOrder?.shipping_fee, selectedOrder?.quantity])
+  }, [selectedOrder?.weight_pounds, selectedOrder?.price_per_pound, selectedOrder?.shipping_fee, selectedOrder?.quantity, selectedOrder?.unit_price])
 
   useEffect(() => {
     fetchOrders()
@@ -363,7 +363,8 @@ export default function AdminDashboard() {
       const priceLb = o.price_per_pound || 6.99
       const fee = o.shipping_fee || 0
       const quantity = o.quantity || 1
-      const orderTotal = ((weight * priceLb) + fee) * quantity
+      const unitPrice = o.unit_price || 0
+      const orderTotal = ((weight * priceLb) * quantity) + fee + (unitPrice * quantity)
       return sum + orderTotal
     }, 0),
   }
@@ -724,6 +725,9 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
+            <p className="text-[10px] text-muted-foreground italic">
+              * El "Precio Unitario" es el costo del artículo para reembolso. El "Flete" es un cargo único por pedido.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>

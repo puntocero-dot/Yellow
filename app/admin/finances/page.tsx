@@ -233,7 +233,8 @@ export default function FinancesPage() {
     const priceLb = o.price_per_pound || 6.99
     const fee = o.shipping_fee || 0
     const quantity = o.quantity || 1
-    const orderTotal = ((weight * priceLb) + fee) * quantity
+    const unitPrice = o.unit_price || 0
+    const orderTotal = ((weight * priceLb) * quantity) + fee + (unitPrice * quantity)
     return sum + orderTotal
   }, 0)
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
@@ -388,7 +389,8 @@ export default function FinancesPage() {
                             const priceLb = order.price_per_pound || 6.99
                             const fee = order.shipping_fee || 0
                             const quantity = order.quantity || 1
-                            const orderTotal = ((weight * priceLb) + fee) * quantity
+                            const unitPrice = order.unit_price || 0
+                            const orderTotal = ((weight * priceLb) * quantity) + fee + (unitPrice * quantity)
                             return (
                               <tr key={order.id} className="border-t border-border">
                                 <td className="p-3">

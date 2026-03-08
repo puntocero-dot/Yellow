@@ -68,9 +68,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    if (!customer_name || !customer_email || !customer_phone || !destination_address || !destination_city) {
+    const missingFields = []
+    if (!customer_name) missingFields.push('nombre')
+    if (!customer_email) missingFields.push('email')
+    if (!customer_phone) missingFields.push('telefono')
+    if (!destination_address) missingFields.push('direccion')
+    if (!destination_city) missingFields.push('ciudad')
+
+    if (missingFields.length > 0) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: `Faltan campos requeridos: ${missingFields.join(', ')}` },
         { status: 400 }
       )
     }
