@@ -37,6 +37,7 @@ type TripOrder = {
   status: string
   weight_pounds: number | null
   shipping_cost: number | null
+  quantity: number | null
   created_at: string
 }
 
@@ -223,7 +224,7 @@ export default function FinancesPage() {
   }
 
   // Calculations
-  const totalPounds = tripOrders.reduce((sum, o) => sum + (o.weight_pounds || 0), 0)
+  const totalPounds = tripOrders.reduce((sum, o) => sum + ((o.weight_pounds || 0) * (o.quantity || 1)), 0)
   const totalRevenue = tripOrders.reduce((sum, o) => sum + (o.shipping_cost || 0), 0)
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
   const netProfit = totalRevenue - totalExpenses

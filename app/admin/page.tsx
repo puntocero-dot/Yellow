@@ -357,7 +357,7 @@ export default function AdminDashboard() {
       'out_for_delivery'
     ].includes(o.status)).length,
     delivered: orders.filter(o => o.status === 'delivered').length,
-    totalWeight: orders.reduce((sum, o) => sum + (o.weight_pounds || 0), 0),
+    totalWeight: orders.reduce((sum, o) => sum + ((o.weight_pounds || 0) * (o.quantity || 1)), 0),
     totalAmount: orders.reduce((sum, o) => sum + (o.shipping_cost || 0), 0),
   }
 
