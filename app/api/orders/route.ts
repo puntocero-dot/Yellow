@@ -92,11 +92,11 @@ export async function POST(request: NextRequest) {
         package_weight,
         weight_pounds: weight_pounds ? parseFloat(weight_pounds) : null,
         declared_value,
-        shipping_cost: shipping_cost ? parseFloat(shipping_cost) : 0,
-        quantity: quantity ? parseInt(quantity.toString()) : 1,
-        unit_price: unit_price ? parseFloat(unit_price.toString()) : 0,
-        shipping_fee: shipping_fee ? parseFloat(shipping_fee.toString()) : 0,
-        price_per_pound: price_per_pound ? parseFloat(price_per_pound.toString()) : 6.99,
+        shipping_cost: shipping_cost ? parseFloat(String(shipping_cost)) : 0,
+        quantity: quantity ? parseInt(String(quantity)) : 1,
+        unit_price: unit_price ? parseFloat(String(unit_price)) : 0,
+        shipping_fee: shipping_fee ? parseFloat(String(shipping_fee)) : 0,
+        price_per_pound: price_per_pound ? parseFloat(String(price_per_pound)) : 6.99,
         status: 'pending',
       })
       .select()
