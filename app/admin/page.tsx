@@ -116,13 +116,14 @@ export default function AdminDashboard() {
     const weight = parseFloat(newOrder.weight_pounds) || 0
     const priceLb = parseFloat(newOrder.price_per_pound) || 0
     const fee = parseFloat(newOrder.shipping_fee) || 0
-    const total = (weight * priceLb) + fee
+    const quantity = parseInt(newOrder.quantity) || 1
+    const total = ((weight * priceLb) + fee) * quantity
     
     if (total.toString() !== newOrder.shipping_cost) {
       setNewOrder(prev => ({ ...prev, shipping_cost: total.toFixed(2) }))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newOrder.weight_pounds, newOrder.price_per_pound, newOrder.shipping_fee])
+  }, [newOrder.weight_pounds, newOrder.price_per_pound, newOrder.shipping_fee, newOrder.quantity])
 
   // Automatic calculation for selected order (editing)
   useEffect(() => {
@@ -130,14 +131,15 @@ export default function AdminDashboard() {
       const weight = selectedOrder.weight_pounds || 0
       const priceLb = selectedOrder.price_per_pound || 6.99
       const fee = selectedOrder.shipping_fee || 0
-      const total = (weight * priceLb) + fee
+      const quantity = selectedOrder.quantity || 1
+      const total = ((weight * priceLb) + fee) * quantity
       
       if (total !== selectedOrder.shipping_cost) {
         setSelectedOrder(prev => prev ? ({ ...prev, shipping_cost: total }) : null)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedOrder?.weight_pounds, selectedOrder?.price_per_pound, selectedOrder?.shipping_fee])
+  }, [selectedOrder?.weight_pounds, selectedOrder?.price_per_pound, selectedOrder?.shipping_fee, selectedOrder?.quantity])
 
   useEffect(() => {
     fetchOrders()
@@ -253,7 +255,7 @@ export default function AdminDashboard() {
         const unitPrice = parseFloat(row['precio']) || 0
         
         // Use provided price if exists, otherwise calculate it
-        const calculatedPrice = row['total'] ? parseFloat(row['total']) : (weight * priceLb) + fee
+        const calculatedPrice = row['total'] ? parseFloat(row['total']) : ((weight * priceLb) + fee) * quantity
 
         try {
           const res = await fetch('/api/orders', {
