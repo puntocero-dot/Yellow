@@ -7,7 +7,7 @@ import {
   Package, Truck, Users, Plus, Search,
   MoreHorizontal, Eye, Edit, Trash2, RefreshCw,
   TrendingUp, Clock, CheckCircle, AlertCircle, LogOut,
-  Upload, FileSpreadsheet, AlertTriangle
+  Upload, FileSpreadsheet, AlertTriangle, Weight, DollarSign
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -113,9 +113,13 @@ export default function AdminDashboard() {
 
   // Automatic calculation for new order
   useEffect(() => {
-    const weight = parseFloat(newOrder.weight_pounds) || 0
-    const priceLb = parseFloat(newOrder.price_per_pound) || 0
-    const fee = parseFloat(newOrder.shipping_fee) || 0
+    const weightStr = (newOrder.weight_pounds || '0').toString().replace(',', '.')
+    const priceLbStr = (newOrder.price_per_pound || '0').toString().replace(',', '.')
+    const feeStr = (newOrder.shipping_fee || '0').toString().replace(',', '.')
+    
+    const weight = parseFloat(weightStr) || 0
+    const priceLb = parseFloat(priceLbStr) || 0
+    const fee = parseFloat(feeStr) || 0
     const quantity = parseInt(newOrder.quantity) || 1
     const total = ((weight * priceLb) + fee) * quantity
     
@@ -128,9 +132,13 @@ export default function AdminDashboard() {
   // Automatic calculation for selected order (editing)
   useEffect(() => {
     if (selectedOrder) {
-      const weight = selectedOrder.weight_pounds || 0
-      const priceLb = selectedOrder.price_per_pound || 6.99
-      const fee = selectedOrder.shipping_fee || 0
+      const weightStr = (selectedOrder.weight_pounds || 0).toString().replace(',', '.')
+      const priceLbStr = (selectedOrder.price_per_pound || 6.99).toString().replace(',', '.')
+      const feeStr = (selectedOrder.shipping_fee || 0).toString().replace(',', '.')
+
+      const weight = parseFloat(weightStr) || 0
+      const priceLb = parseFloat(priceLbStr) || 0
+      const fee = parseFloat(feeStr) || 0
       const quantity = selectedOrder.quantity || 1
       const total = ((weight * priceLb) + fee) * quantity
       
@@ -349,6 +357,8 @@ export default function AdminDashboard() {
       'out_for_delivery'
     ].includes(o.status)).length,
     delivered: orders.filter(o => o.status === 'delivered').length,
+    totalWeight: orders.reduce((sum, o) => sum + (o.weight_pounds || 0), 0),
+    totalAmount: orders.reduce((sum, o) => sum + (o.shipping_cost || 0), 0),
   }
 
   return (
@@ -429,6 +439,28 @@ export default function AdminDashboard() {
                   <p className="text-3xl font-bold text-green-500">{stats.delivered}</p>
                 </div>
                 <CheckCircle className="w-10 h-10 text-green-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Libras</p>
+                  <p className="text-3xl font-bold text-yellow-500">{stats.totalWeight.toFixed(1)}</p>
+                </div>
+                <Weight className="w-10 h-10 text-yellow-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total a Cobrar</p>
+                  <p className="text-3xl font-bold text-green-600">${stats.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                </div>
+                <DollarSign className="w-10 h-10 text-green-600 opacity-50" />
               </div>
             </CardContent>
           </Card>

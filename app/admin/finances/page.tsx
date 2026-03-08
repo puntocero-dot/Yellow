@@ -36,6 +36,7 @@ type TripOrder = {
   destination_city: string
   status: string
   weight_pounds: number | null
+  shipping_cost: number | null
   created_at: string
 }
 
@@ -212,7 +213,7 @@ export default function FinancesPage() {
       await fetch(`/api/trips/${selectedTripId}/orders`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order_id: orderId, weight_pounds: weightValue }),
+        body: JSON.stringify({ order_id: orderId, weight_pounds: weightValue.replace(',', '.') }),
       })
       setEditingWeight(null)
       fetchTripDetails()
@@ -223,11 +224,7 @@ export default function FinancesPage() {
 
   // Calculations
   const totalPounds = tripOrders.reduce((sum, o) => sum + (o.weight_pounds || 0), 0)
-  const totalRevenue = tripOrders.reduce((sum, o) => {
-    const lbs = o.weight_pounds || 0
-    const base = Math.max(lbs * PRICE_PER_POUND, lbs > 0 ? 15 : 0)
-    return sum + base + (lbs > 0 ? HANDLING_FEE : 0)
-  }, 0)
+  const totalRevenue = tripOrders.reduce((sum, o) => sum + (o.shipping_cost || 0), 0)
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
   const netProfit = totalRevenue - totalExpenses
 
@@ -377,8 +374,7 @@ export default function FinancesPage() {
                         <tbody>
                           {tripOrders.map(order => {
                             const lbs = order.weight_pounds || 0
-                            const base = Math.max(lbs * PRICE_PER_POUND, lbs > 0 ? 15 : 0)
-                            const orderTotal = base + (lbs > 0 ? HANDLING_FEE : 0)
+                            const orderTotal = order.shipping_cost || 0
                             return (
                               <tr key={order.id} className="border-t border-border">
                                 <td className="p-3">
@@ -431,7 +427,7 @@ export default function FinancesPage() {
                 </Card>
 
                 <p className="text-xs text-muted-foreground mt-2">
-                  Tarifa: ${PRICE_PER_POUND}/lb + ${HANDLING_FEE} manejo | Mínimo: $15.00 | Click en libras para editar
+                  Haz clic en las libras de un pedido para editar su peso
                 </p>
               </div>
 
