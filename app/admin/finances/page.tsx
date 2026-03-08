@@ -112,6 +112,7 @@ export default function FinancesPage() {
       fetchTripDetails()
       fetchUnassignedOrders()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTripId])
 
   async function fetchTrips() {

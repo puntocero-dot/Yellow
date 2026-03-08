@@ -121,6 +121,7 @@ export default function AdminDashboard() {
     if (total.toString() !== newOrder.shipping_cost) {
       setNewOrder(prev => ({ ...prev, shipping_cost: total.toFixed(2) }))
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newOrder.weight_pounds, newOrder.price_per_pound, newOrder.shipping_fee])
 
   // Automatic calculation for selected order (editing)
@@ -135,6 +136,7 @@ export default function AdminDashboard() {
         setSelectedOrder(prev => prev ? ({ ...prev, shipping_cost: total }) : null)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedOrder?.weight_pounds, selectedOrder?.price_per_pound, selectedOrder?.shipping_fee])
 
   useEffect(() => {
