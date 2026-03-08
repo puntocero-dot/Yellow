@@ -119,7 +119,8 @@ export const CUSTOMS_LINKS = {
 export function calculateShippingCost(
   weightPounds: number,
   declaredValue: number = 0,
-  includeInsurance: boolean = false
+  includeInsurance: boolean = false,
+  quantity: number = 1
 ): {
   baseCost: number
   handlingFee: number
@@ -127,25 +128,27 @@ export function calculateShippingCost(
   total: number
   breakdown: string[]
 } {
+  const totalWeight = weightPounds * quantity
   const baseCost = Math.max(
-    weightPounds * PRICING.pricePerPound,
+    totalWeight * PRICING.pricePerPound,
     PRICING.minimumCharge
   )
   
-  const handlingFee = PRICING.handlingFee
+  // Handling fee is now variable and added manually in admin or mentioned as "extra" in chat
+  const handlingFee = 0 
   const insurance = includeInsurance ? declaredValue * PRICING.insuranceRate : 0
   const total = baseCost + handlingFee + insurance
 
   const breakdown = [
-    `Envío (${weightPounds} lbs x $${PRICING.pricePerPound.toFixed(2)}): $${baseCost.toFixed(2)}`,
-    `Cargo por manejo: $${handlingFee.toFixed(2)}`,
+    `Envío (${totalWeight} lbs [${quantity}x${weightPounds}lb] x $${PRICING.pricePerPound.toFixed(2)}): $${baseCost.toFixed(2)}`,
+    `Cargos en El Salvador: Variables según zona`,
   ]
 
   if (includeInsurance && insurance > 0) {
     breakdown.push(`Seguro (${(PRICING.insuranceRate * 100).toFixed(0)}% de $${declaredValue.toFixed(2)}): $${insurance.toFixed(2)}`)
   }
 
-  breakdown.push(`**Total estimado: $${total.toFixed(2)}**`)
+  breakdown.push(`**Total estimado: $${total.toFixed(2)}** + envío local`)
 
   return { baseCost, handlingFee, insurance, total, breakdown }
 }

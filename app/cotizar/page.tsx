@@ -63,7 +63,7 @@ export default function CotizarPage() {
   ])
   const [inputMessage, setInputMessage] = useState('')
   const [conversationState, setConversationState] = useState<ConversationState>('idle')
-  const [orderData, setOrderData] = useState<OrderData>({})
+  const [orderData, setOrderData] = useState<OrderData & { quantity?: number }>({ quantity: 1 })
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -78,7 +78,22 @@ export default function CotizarPage() {
     setMessages(prev => [...prev, botMessage])
   }
 
-  function extractNumber(text: string): number | null {
+  function extractWeightAndQuantity(text: string): { weight: number | null, quantity: number } {
+    const lowerText = text.toLowerCase()
+    let quantity = 1
+    let weight: number | null = null
+
+    // Detectar patrones como "2 cajas de 10 libras" o "2 de 10"
+    const qtyPattern = /(\d+)\s*(?:cajas?|paquetes?|unidades?|de)\s*(\d+(?:\.\d+)?)\s*(?:libras?|lbs?|lb)/i
+    const qtyMatch = text.match(qtyPattern)
+    
+    if (qtyMatch) {
+      quantity = parseInt(qtyMatch[1])
+      weight = parseFloat(qtyMatch[2])
+      return { weight, quantity }
+    }
+
+    // Si no hay patrón de cantidad, buscar peso simple
     const patterns = [
       /([\d.]+)\s*(?:libras?|lbs?|lb)/i,
       /(?:de|son|pesa|pesan|tiene|como|aproximadamente|aprox)\s*([\d.]+)/i,
@@ -88,18 +103,20 @@ export default function CotizarPage() {
     for (const pattern of patterns) {
       const match = text.match(pattern)
       if (match) {
-        let num = parseFloat(match[1])
-        if (text.toLowerCase().includes('kilo') || text.toLowerCase().includes('kg')) {
-          num = num * 2.205
+        weight = parseFloat(match[1])
+        if (lowerText.includes('kilo') || lowerText.includes('kg')) {
+          weight = weight * 2.205
         }
-        return num
+        break
       }
     }
     
-    const simpleNum = text.match(/^[\d.]+$/)
-    if (simpleNum) return parseFloat(simpleNum[0])
+    if (!weight) {
+      const simpleNum = text.match(/^[\d.]+$/)
+      if (simpleNum) weight = parseFloat(simpleNum[0])
+    }
     
-    return null
+    return { weight, quantity }
   }
 
   function extractPhone(text: string): string | null {
@@ -245,16 +262,17 @@ export default function CotizarPage() {
     // Precios generales
     if (/^(precio|precios|cuanto|cuánto|tarifa|costo)s?$/i.test(lowerInput) || 
         /cuánto.*cuesta|cuanto.*cuesta|cuál.*precio|cual.*precio/i.test(lowerInput)) {
-      addBotMessage(`💰 **Nuestros precios:**\n\n• **$${PRICING.pricePerPound.toFixed(2)} por libra**\n• Mínimo: $${PRICING.minimumCharge.toFixed(2)}\n• Manejo: $${PRICING.handlingFee.toFixed(2)}\n\nEjemplos:\n• 3 lb → $${calculateShippingCost(3, 0, false).total.toFixed(2)}\n• 5 lb → $${calculateShippingCost(5, 0, false).total.toFixed(2)}\n• 10 lb → $${calculateShippingCost(10, 0, false).total.toFixed(2)}\n\nDime el peso de tu paquete para cotizar.`)
+      addBotMessage(`💰 **Nuestros precios:**\n\n• **$${PRICING.pricePerPound.toFixed(2)} por libra**\n• Mínimo: $${PRICING.minimumCharge.toFixed(2)} por envío\n• En El Salvador: El costo es variable según la zona (se confirma al finalizar)\n\nEjemplos:\n• 5 lb → $${calculateShippingCost(5, 0, false).total.toFixed(2)} + envío local\n• 10 lb → $${calculateShippingCost(10, 0, false).total.toFixed(2)} + envío local\n\nDime el peso de tu paquete para cotizar.`)
       return
     }
 
     // Detectar peso para cotización rápida
-    const weight = extractNumber(input)
+    const { weight, quantity } = extractWeightAndQuantity(input)
     if (weight && weight > 0) {
-      const quote = calculateShippingCost(weight, 0, false)
-      addBotMessage(`📦 Para **${weight} libras** el costo es **$${quote.total.toFixed(2)}**\n\nDesglose:\n• Envío: $${quote.baseCost.toFixed(2)}\n• Manejo: $${quote.handlingFee.toFixed(2)}\n\n⏱️ Tiempo de entrega: 7-12 días hábiles\n\n¿Te gustaría crear un pedido?`)
-      setOrderData({ weight })
+      const quote = calculateShippingCost(weight, 0, false, quantity)
+      const weightDisplay = quantity > 1 ? `${quantity}x${weight}lb (${weight * quantity} lbs)` : `${weight} libras`
+      addBotMessage(`📦 Para **${weightDisplay}** el costo es **$${quote.total.toFixed(2)}** + envío local\n\nDesglose:\n• Envío: $${quote.baseCost.toFixed(2)}\n• Cargos en El Salvador: Variables según zona\n\n⏱️ Tiempo de entrega: 7-12 días hábiles\n\n¿Te gustaría crear un pedido?`)
+      setOrderData({ weight, quantity })
       return
     }
 
@@ -358,15 +376,16 @@ export default function CotizarPage() {
         break
 
       case 'asking_weight':
-        const weight = extractNumber(input)
-        if (!weight || weight <= 0) {
-          addBotMessage('No entendí el peso. Dime un número, por ejemplo "5 libras" o simplemente "5".')
+        const { weight: w, quantity: q } = extractWeightAndQuantity(input)
+        if (!w || w <= 0) {
+          addBotMessage('No entendí el peso. Dime un número, por ejemplo "5 libras" o "2 de 10 libras".')
           return
         }
-        const quote = calculateShippingCost(weight, 0, false)
-        setOrderData(prev => ({ ...prev, weight }))
+        const quote = calculateShippingCost(w, 0, false, q)
+        setOrderData(prev => ({ ...prev, weight: w, quantity: q }))
         setConversationState('asking_name')
-        addBotMessage(`${weight} libras, el costo sería $${quote.total.toFixed(2)}. Ahora necesito tus datos de contacto. ¿Cuál es tu nombre completo?`)
+        const weightText = q > 1 ? `${q}x${w}lb (${w * q} lbs)` : `${w} libras`
+        addBotMessage(`${weightText}, el costo base sería $${quote.total.toFixed(2)} + cargos de envío local en El Salvador. Ahora necesito tus datos de contacto. ¿Cuál es tu nombre completo?`)
         break
 
       case 'asking_name':
@@ -408,8 +427,12 @@ export default function CotizarPage() {
         setOrderData(prev => ({ ...prev, deliveryAddress: input }))
         setConversationState('confirming')
         
-        const finalQuote = calculateShippingCost(orderData.weight || 0, 0, false)
-        addBotMessage(`Perfecto, este es el resumen de tu pedido:\n\n📦 **Producto:** ${orderData.product}\n⚖️ **Peso:** ${orderData.weight} lb\n💰 **Costo:** $${finalQuote.total.toFixed(2)}\n\n👤 **Nombre:** ${orderData.contactName}\n📱 **Teléfono:** ${orderData.contactPhone}\n📍 **Entrega:** ${input}, ${orderData.deliveryCity}\n\n¿Confirmas el pedido? (sí/no)`)
+        const finalQuote = calculateShippingCost(orderData.weight || 0, 0, false, orderData.quantity || 1)
+        const summaryWeight = (orderData.quantity || 1) > 1 
+          ? `${orderData.quantity}x${orderData.weight}lb (${(orderData.weight || 0) * (orderData.quantity || 1)} lbs)`
+          : `${orderData.weight} lb`
+          
+        addBotMessage(`Perfecto, este es el resumen de tu pedido:\n\n📦 **Producto:** ${orderData.product}\n⚖️ **Peso:** ${summaryWeight}\n💰 **Costo Base:** $${finalQuote.total.toFixed(2)} + envío local\n\n👤 **Nombre:** ${orderData.contactName}\n📱 **Teléfono:** ${orderData.contactPhone}\n📍 **Entrega:** ${input}, ${orderData.deliveryCity}\n\n¿Confirmas el pedido? (sí/no)`)
         break
 
       case 'confirming':
