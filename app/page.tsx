@@ -61,7 +61,7 @@ export default function HomePage() {
               <span className="text-yellow-500">El Salvador</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8">
-              Envíos rápidos, seguros y confiables. Rastrea tu paquete en tiempo real 
+              Envíos rápidos, seguros y confiables. Rastrea tu paquete en tiempo real
               y recibe notificaciones automáticas por WhatsApp y Email.
             </p>
 
@@ -114,7 +114,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Rastreo en Tiempo Real</h3>
                 <p className="text-muted-foreground">
-                  Sigue tu paquete desde Los Ángeles hasta tu puerta en El Salvador. 
+                  Sigue tu paquete desde Los Ángeles hasta tu puerta en El Salvador.
                   Actualizaciones instantáneas en cada etapa del envío.
                 </p>
               </CardContent>
@@ -127,7 +127,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Notificaciones Automáticas</h3>
                 <p className="text-muted-foreground">
-                  Recibe alertas por WhatsApp y Email cada vez que tu paquete 
+                  Recibe alertas por WhatsApp y Email cada vez que tu paquete
                   cambie de estado. Nunca pierdas de vista tu envío.
                 </p>
               </CardContent>
@@ -140,7 +140,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Entrega a Domicilio</h3>
                 <p className="text-muted-foreground">
-                  Nuestros motoristas entregan directamente en tu puerta. 
+                  Nuestros motoristas entregan directamente en tu puerta.
                   Cobertura en todo El Salvador con comprobante de entrega.
                 </p>
               </CardContent>
@@ -190,12 +190,12 @@ export default function HomePage() {
             ¿Tienes preguntas? Nuestro chatbot te ayuda 24/7
           </h2>
           <p className="text-black/80 text-lg mb-8 max-w-2xl mx-auto">
-            Escríbenos por WhatsApp y nuestro asistente de IA responderá tus dudas 
+            Escríbenos por WhatsApp y nuestro asistente de IA responderá tus dudas
             sobre envíos, tarifas y estado de pedidos al instante.
           </p>
-          <a 
-            href="https://wa.me/50312345678" 
-            target="_blank" 
+          <a
+            href="https://wa.me/+12133774155"
+            target="_blank"
             rel="noopener noreferrer"
           >
             <Button size="lg" variant="secondary" className="h-14 px-8 text-lg">
@@ -232,7 +232,7 @@ export default function HomePage() {
             <div>
               <h4 className="font-semibold mb-4">Contacto</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>📞 +503 1234 5678</li>
+                <li>📞 +12133774155</li>
                 <li>📧 info@theyellowexpress.com</li>
                 <li>📍 San Salvador, El Salvador</li>
               </ul>

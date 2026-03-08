@@ -497,7 +497,28 @@ personal-website/
 
 ---
 
-## 14. Convenciones y Reglas del Proyecto
+## 14. Mantenimiento de Base de Datos
+
+### Limpieza para Producción
+Para borrar todos los datos de prueba y comenzar con datos reales, ejecuta este script en el **SQL Editor de Supabase**:
+```sql
+-- Borrar historial, gastos, pedidos y viajes (preservando usuarios)
+DELETE FROM status_history;
+DELETE FROM trip_expenses;
+DELETE FROM orders;
+DELETE FROM trips;
+```
+
+### Backups Automatizados
+Se implementó un sistema de backup cada 4 horas:
+- **Ruta:** `/api/admin/backup`
+- **Frecuencia:** Cada 4 horas (`0 */4 * * *` en `vercel.json`)
+- **Destino:** Bucket `backups` en Supabase Storage (formato JSON timestamped).
+- **Seguridad:** Requiere header `Authorization: Bearer <CRON_SECRET>`.
+
+---
+
+## 15. Convenciones y Reglas del Proyecto
 
 1. **Backend primero** — definir endpoints antes de UI
 2. **Roles y seguridad** — toda ruta protegida verifica session + role
