@@ -338,7 +338,14 @@ export default function AdminDashboard() {
   const stats = {
     total: orders.length,
     pending: orders.filter(o => o.status === 'pending').length,
-    inTransit: orders.filter(o => ['in_transit_international', 'out_for_delivery'].includes(o.status)).length,
+    inTransit: orders.filter(o => [
+      'warehouse_la', 
+      'in_transit_international', 
+      'customs', 
+      'warehouse_sv', 
+      'assigned_to_driver', 
+      'out_for_delivery'
+    ].includes(o.status)).length,
     delivered: orders.filter(o => o.status === 'delivered').length,
   }
 
@@ -732,7 +739,7 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             <div className="bg-muted/50 p-4 rounded-lg text-sm">
               <p className="font-medium mb-2">Formato del archivo CSV:</p>
-              <code className="text-xs text-yellow-500 block bg-background p-2 rounded">
+              <code className="text-[10px] text-yellow-500 block bg-background p-3 rounded leading-relaxed border border-yellow-500/20 break-all whitespace-pre-wrap">
                 nombre,email,telefono,direccion,ciudad,descripcion,peso,cantidad,precio,flete,costo_libra
               </code>
               <p className="text-muted-foreground mt-2">

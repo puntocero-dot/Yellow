@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
   Package, Truck, MapPin, Clock, CheckCircle, 
@@ -140,6 +140,7 @@ export default function TrackingPage() {
   }, [tracking])
 
   const currentStatusIndex = order ? STATUS_ORDER.indexOf(order.status) : -1
+  const router = useRouter()
 
   if (loading) {
     return (
@@ -163,12 +164,10 @@ export default function TrackingPage() {
               No pudimos encontrar un pedido con el número de guía <strong>{tracking}</strong>. 
               Por favor verifica el número e intenta de nuevo.
             </p>
-            <Link href="/">
-              <Button>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver al inicio
-              </Button>
-            </Link>
+            <Button onClick={() => router.back()}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver atrás
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -192,10 +191,13 @@ export default function TrackingPage() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6">
+        <button 
+          onClick={() => router.back()}
+          className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6 transition-colors"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Volver al inicio
-        </Link>
+          Volver atrás
+        </button>
 
         {/* Order Info Card */}
         <Card className="mb-8">

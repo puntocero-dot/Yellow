@@ -144,7 +144,7 @@ export default function TripsPage() {
   }
 
   const upcomingTrips = trips.filter(t => ['planned', 'collecting'].includes(t.status))
-  const activeTrips = trips.filter(t => t.status === 'in_transit')
+  const activeTrips = trips.filter(t => ['collecting', 'in_transit'].includes(t.status))
   const completedTrips = trips.filter(t => t.status === 'completed')
 
   return (
