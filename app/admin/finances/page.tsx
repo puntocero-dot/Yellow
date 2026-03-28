@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -75,7 +75,7 @@ const EXPENSE_CATEGORIES = [
   { value: 'other', label: 'Otros', icon: '📋' },
 ]
 
-export default function FinancesPage() {
+function FinancesContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -672,5 +672,17 @@ export default function FinancesPage() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+export default function FinancesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <FinancesContent />
+    </Suspense>
   )
 }

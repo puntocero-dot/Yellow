@@ -7,7 +7,8 @@ import {
   Package, Truck, Users, Plus, Search,
   MoreHorizontal, Eye, Edit, Trash2, RefreshCw,
   TrendingUp, Clock, CheckCircle, AlertCircle, LogOut,
-  Upload, FileSpreadsheet, AlertTriangle, Weight, DollarSign
+  Upload, FileSpreadsheet, AlertTriangle, Weight, DollarSign,
+  Download, Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -58,6 +59,7 @@ type Driver = {
 }
 
 const STATUS_OPTIONS = [
+  { value: 'pending_confirmation', label: 'Cotización (Chatbot)' },
   { value: 'pending', label: 'Pendiente' },
   { value: 'warehouse_la', label: 'Bodega LA' },
   { value: 'in_transit_international', label: 'En Tránsito Internacional' },
@@ -70,6 +72,7 @@ const STATUS_OPTIONS = [
 ]
 
 const STATUS_COLORS: Record<string, string> = {
+  pending_confirmation: 'bg-indigo-500',
   pending: 'bg-gray-500',
   warehouse_la: 'bg-blue-500',
   warehouse_sv: 'bg-blue-600',
@@ -94,6 +97,7 @@ export default function AdminDashboard() {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [bulkUploading, setBulkUploading] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const { toast } = useToast()
 
   const [newOrder, setNewOrder] = useState({
@@ -302,6 +306,31 @@ export default function AdminDashboard() {
     }
   }
 
+  async function handleDownloadBackup() {
+    setIsExporting(true)
+    try {
+      const res = await fetch('/api/admin/export')
+      if (!res.ok) throw new Error('Error al generar respaldo')
+      
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `yellow-express-full-backup-${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      toast({ title: 'Respaldo descargado exitosamente' })
+    } catch (error) {
+      console.error('Export error:', error)
+      toast({ title: 'Error al descargar respaldo', variant: 'destructive' })
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   async function updateOrderStatus(orderId: string, status: string, driverId?: string, weightPounds?: string) {
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
@@ -347,7 +376,7 @@ export default function AdminDashboard() {
 
   const stats = {
     total: orders.length,
-    pending: orders.filter(o => o.status === 'pending').length,
+    pending: orders.filter(o => o.status === 'pending' || o.status === 'pending_confirmation').length,
     inTransit: orders.filter(o => [
       'warehouse_la', 
       'in_transit_international', 
@@ -506,6 +535,19 @@ export default function AdminDashboard() {
             <Button variant="outline" onClick={() => setIsBulkUploadOpen(true)}>
               <Upload className="w-4 h-4 mr-2" />
               Carga Masiva
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleDownloadBackup} 
+              disabled={isExporting}
+              className="text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/10"
+            >
+              {isExporting ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              Respaldar Todo
             </Button>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
