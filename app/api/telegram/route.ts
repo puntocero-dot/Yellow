@@ -51,8 +51,16 @@ async function answerCallbackQuery(token: string, callbackQueryId: string, text:
 
 export async function POST(request: NextRequest) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
+  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+  // 1. Validate Secret Token
+  const incomingSecret = request.headers.get('x-telegram-bot-api-secret-token');
+  if (webhookSecret && incomingSecret !== webhookSecret) {
+    console.warn('Unauthorized request to Telegram Webhook endpoint');
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  }
 
   if (!token) {
     return NextResponse.json({ error: 'TELEGRAM_BOT_TOKEN not configured' }, { status: 500 });
@@ -62,11 +70,18 @@ export async function POST(request: NextRequest) {
 
   try {
     const update = await request.json();
-    console.log('Update received:', JSON.stringify(update));
+
+    // 2. Validate basic structure
+    if (!update || (!update.message && !update.callback_query)) {
+      console.warn('Invalid update structure:', JSON.stringify(update));
+      return NextResponse.json({ success: true, warning: 'Ignored malformed update' });
+    }
 
     if (update.message) {
-      const chatId = update.message.chat.id;
+      const chatId = update.message.chat?.id;
       const text = update.message.text;
+
+      if (!chatId) return NextResponse.json({ success: true });
 
       if (text === '/start') {
         await sendMessage(token, chatId, '📦 *¡Bienvenido al Bot de Yellow Express!* 🚚\n\nUsa /gasto para registrar un nuevo costo asociado a un viaje.');
