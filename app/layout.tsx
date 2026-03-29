@@ -8,6 +8,10 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'The Yellow Express - Sistema de Gestión Logística',
   description: 'Sistema completo de gestión de envíos entre Los Ángeles y El Salvador con agente de IA, notificaciones automáticas y rastreo en tiempo real.',
+  icons: {
+    icon: '/icon.png',
+    apple: '/icon.png',
+  },
 }
 
 export default function RootLayout({
