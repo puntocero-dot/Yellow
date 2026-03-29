@@ -5,7 +5,7 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://theyellowexpress.com';
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.theyellowexpress.com';
 
 if (!token) {
   console.error('❌ TELEGRAM_BOT_TOKEN not found in .env.local');
