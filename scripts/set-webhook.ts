@@ -21,9 +21,15 @@ async function setup() {
   try {
     const result = await bot.setWebHook(webhookUrl);
     if (result) {
-      console.log('✅ Webhook set successfully!');
+      console.log('✅ Webhook request sent successfully!');
+      // Wait 2 seconds for Telegram to process
+      await new Promise(resolve => setTimeout(resolve, 2000));
       const info = await bot.getWebHookInfo();
-      console.log('📊 Webhook Info:', info);
+      console.log('📊 Verifying Webhook info...');
+      console.log('🔗 URL:', info.url || '❌ NOT SET');
+      if (info.url) {
+        console.log('✨ Success! The bot is now live on Vercel.');
+      }
     } else {
       console.error('❌ Failed to set webhook.');
     }
