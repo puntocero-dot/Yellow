@@ -14,7 +14,6 @@ const EXPENSE_CATEGORIES = [
   { value: 'other', label: 'Otros', icon: '📋' },
 ];
 
-// Reusable Telegram API calls using native fetch (safe for Vercel Serverless)
 async function sendTelegramRequest(token: string, method: string, payload: any) {
   try {
     const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
@@ -55,47 +54,96 @@ export async function POST(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-  // 1. Validate Secret Token
   const incomingSecret = request.headers.get('x-telegram-bot-api-secret-token');
   if (webhookSecret && incomingSecret !== webhookSecret) {
-    console.warn('Unauthorized request to Telegram Webhook endpoint');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
   if (!token) {
-    return NextResponse.json({ error: 'TELEGRAM_BOT_TOKEN not configured' }, { status: 500 });
+    return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 });
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
     const update = await request.json();
-
-    // 2. Validate basic structure
     if (!update || (!update.message && !update.callback_query)) {
-      console.warn('Invalid update structure:', JSON.stringify(update));
-      return NextResponse.json({ success: true, warning: 'Ignored malformed update' });
+      return NextResponse.json({ success: true });
     }
 
     if (update.message) {
       const chatId = update.message.chat?.id;
       const text = update.message.text;
-
       if (!chatId) return NextResponse.json({ success: true });
 
+      // 1. Authorization Check (Persistent)
+      const { data: user } = await supabase
+        .from('users')
+        .select('id, email, full_name, telegram_id')
+        .eq('telegram_id', chatId.toString())
+        .single();
+
+      if (!user) {
+        // User not linked yet. Check session state.
+        const session = await getSession(supabase, chatId);
+        
+        if (session?.step === 'AWAITING_AUTH_EMAIL') {
+          // Process email authentication
+          const email = text?.toLowerCase().trim();
+          if (!email || !email.includes('@')) {
+            await sendMessage(token, chatId, '❌ Por favor, ingresa un correo electrónico válido.');
+            return NextResponse.json({ success: true });
+          }
+
+          const { data: foundUser, error: findError } = await supabase
+            .from('users')
+            .select('id, email, full_name')
+            .eq('email', email)
+            .single();
+
+          if (findError || !foundUser) {
+            await sendMessage(token, chatId, '🚫 Lo siento, ese correo no está registrado en nuestro sistema de conductores. Contacta al administrador.');
+            await resetSession(supabase, chatId);
+          } else {
+            // Link Telegram ID to this user
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({ telegram_id: chatId.toString() })
+              .eq('id', foundUser.id);
+
+            if (updateError) {
+              // Try creating a linking column in session if users table update fails (optional fallback)
+              console.error('Failed to link telegram_id in users table:', updateError);
+              await sendMessage(token, chatId, '⚠️ Hubo un error al vincular tu cuenta. Asegúrate de que el administrador haya habilitado el campo `telegram_id` en la tabla `users`.');
+            } else {
+              await sendMessage(token, chatId, `✅ ¡Bienvenido, *${foundUser.full_name}*! Tu cuenta ha sido vinculada correctamente. Ya puedes usar el bot.`);
+              await resetSession(supabase, chatId);
+              await startExpenseFlow(supabase, token, chatId);
+            }
+          }
+          return NextResponse.json({ success: true });
+        } else {
+          // Start Authentication Flow
+          await updateSession(supabase, chatId, { step: 'AWAITING_AUTH_EMAIL' });
+          await sendMessage(token, chatId, '👋 *¡Hola!* Para usar el bot de Yellow Express, primero debemos verificar tu cuenta.\n\nPor favor, *ingresa el correo electrónico* con el que estás registrado en el sistema.');
+          return NextResponse.json({ success: true });
+        }
+      }
+
+      // 2. Authorized User Actions
       if (text === '/start') {
-        await sendMessage(token, chatId, '📦 *¡Bienvenido al Bot de Yellow Express!* 🚚\n\nUsa /gasto para registrar un nuevo costo asociado a un viaje.');
+        await sendMessage(token, chatId, `📦 *¡Bienvenido de nuevo, ${user.full_name}!* 🚚\n\nUsa /gasto para registrar un nuevo costo asociado a un viaje.`);
         await resetSession(supabase, chatId);
       } 
-      else if (text === '/gasto' || text?.toLowerCase().includes('hola') || text?.toLowerCase().includes('ola')) {
+      else if (text === '/gasto' || text?.toLowerCase().includes('hola')) {
         await startExpenseFlow(supabase, token, chatId);
       } 
       else {
         const session = await getSession(supabase, chatId);
-        if (!session) {
-          await startExpenseFlow(supabase, token, chatId);
-        } else {
+        if (session) {
           await handleTextInput(supabase, token, chatId, text, session);
+        } else {
+          await sendMessage(token, chatId, 'Usa /gasto para empezar.');
         }
       }
     } 
@@ -103,13 +151,18 @@ export async function POST(request: NextRequest) {
       const chatId = update.callback_query.message.chat.id;
       const messageId = update.callback_query.message.message_id;
       const data = update.callback_query.data;
+      
+      // Secondary auth check for callbacks
+      const { data: user } = await supabase.from('users').select('id').eq('telegram_id', chatId.toString()).single();
+      if (!user) return NextResponse.json({ success: true });
+
       await handleCallback(supabase, token, chatId, messageId, data, update.callback_query.id);
     }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Error processing Telegram update:', error);
-    return NextResponse.json({ error: 'Internal Error', details: error.message }, { status: 500 });
+    console.error('Fatal Bot Error:', error);
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }
 
@@ -166,7 +219,6 @@ async function handleCallback(supabase: any, token: string, chatId: number, mess
       });
 
     if (error) {
-      console.error("DB error:", error);
       await answerCallbackQuery(token, queryId, '❌ Error al registrar');
       await sendMessage(token, chatId, '❌ Error al guardar en base de datos.');
       return;
