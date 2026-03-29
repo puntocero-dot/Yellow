@@ -13,7 +13,7 @@ if (!token) {
 }
 
 const bot = new TelegramBot(token, { polling: false });
-const webhookUrl = `${appUrl}/api/telegram`;
+const webhookUrl = `${appUrl.replace(/\/$/, '')}/api/telegram`;
 
 async function setup() {
   console.log(`🚀 Setting webhook to: ${webhookUrl}`);

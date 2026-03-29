@@ -40,11 +40,17 @@ export async function POST(request: NextRequest) {
         await bot.sendMessage(chatId, '📦 *¡Bienvenido al Bot de Yellow Express!* 🚚\n\nUsa /gasto para registrar un nuevo costo asociado a un viaje.', { parse_mode: 'Markdown' });
         await resetSession(chatId);
       } 
-      else if (text === '/gasto') {
+      else if (text === '/gasto' || text?.toLowerCase().includes('hola')) {
         await startExpenseFlow(chatId);
       } 
       else {
-        await handleTextInput(chatId, text);
+        const session = await getSession(chatId);
+        if (!session) {
+          // If no session exists, assume they want to start the flow with any message
+          await startExpenseFlow(chatId);
+        } else {
+          await handleTextInput(chatId, text);
+        }
       }
     } 
     else if (update.callback_query) {
