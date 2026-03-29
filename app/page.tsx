@@ -1,24 +1,10 @@
-'use client'
-
 import Link from 'next/link'
-import { Package, Truck, MapPin, MessageCircle, Shield, Clock, Calculator } from 'lucide-react'
+import { Package, Truck, MessageCircle, Shield, Clock, Calculator } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { TrackingForm } from '@/components/TrackingForm'
 
 export default function HomePage() {
-  const [trackingNumber, setTrackingNumber] = useState('')
-  const router = useRouter()
-
-  const handleTrack = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (trackingNumber.trim()) {
-      router.push(`/track/${trackingNumber.trim()}`)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -65,22 +51,8 @@ export default function HomePage() {
               y recibe notificaciones automáticas por WhatsApp y Email.
             </p>
 
-            {/* Tracking Form */}
-            <form onSubmit={handleTrack} className="max-w-xl mx-auto">
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  placeholder="Ingresa tu número de guía (ej: YE20240115ABC)"
-                  value={trackingNumber}
-                  onChange={(e) => setTrackingNumber(e.target.value)}
-                  className="h-12 text-lg"
-                />
-                <Button type="submit" size="lg" className="h-12 px-8">
-                  <MapPin className="w-5 h-5 mr-2" />
-                  Rastrear
-                </Button>
-              </div>
-            </form>
+            {/* Tracking Form (Client Component) */}
+            <TrackingForm />
 
             <div className="flex flex-wrap justify-center gap-4 mt-8">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
