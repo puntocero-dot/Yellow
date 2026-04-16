@@ -1,0 +1,19 @@
+{
+  "name": "The Yellow Express",
+  "short_name": "Yellow Express",
+  "description": "Envios seguros Los Angeles - El Salvador. Courier confiable con rastreo en tiempo real.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1A1A1A",
+  "theme_color": "#FFD700",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["logistics", "shipping", "business"]
+}
